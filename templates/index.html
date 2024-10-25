@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Color Game</title>
+    <style>
+        #color-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 100px);
+            grid-gap: 5px;
+            margin-top: 20px;
+        }
+        .color-box {
+            width: 100px;
+            height: 100px;
+            border: 1px solid #000;
+            cursor: pointer;
+        }
+        #user-info {
+            display: none;
+        }
+    </style>
+    <script>
+        let selectedButtons = [];
+        let colorMatrix = [];
+        let level = 1;
+        let startTime = 0;
+        let userInfo = {};
+
+        // Function to show user info form
+        function showUserInfo() {
+            document.getElementById('user-info').style.display = 'block';
+        }
+
+        // Function to start the game
+        async function startGame() {
+            showUserInfo();
+        }
+
+        // Function to collect user info
+        function saveUserInfo() {
+            userInfo.name = document.getElementById('name').value;
+            userInfo.surname = document.getElementById('surname').value;
+            userInfo.age = document.getElementById('age').value;
+            userInfo.gender = document.querySelector('input[name="gender"]:checked').value;
+
+            document.getElementById('user-info').style.display = 'none';
+            startLevel();
+        }
+
+        // Start a new level
+        async function startLevel() {
+            const response = await fetch('/start_level', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ level }),
+            });
+
+            const data = await response.json();
+            colorMatrix = data.color_matrix;
+            displayColorMatrix(colorMatrix);
+            startTime = performance.now(); // Start timer for this level
+        }
+
+        // Display color matrix
+        function displayColorMatrix(matrix) {
+            const colorGrid = document.getElementById('color-grid');
+            colorGrid.innerHTML = ''; // Clear previous colors
+            selectedButtons = [];
+
+            matrix.forEach(row => {
+                row.forEach(color => {
+                    const colorBox = document.createElement('div');
+                    colorBox.className = 'color-box';
+                    colorBox.style.backgroundColor = color; // Set the background color
+                    colorBox.onclick = () => toggleSelection(colorBox, color);
+                    colorGrid.appendChild(colorBox);
+                });
+            });
+
+            const nextButton = document.createElement('button');
+            nextButton.innerText = "Next";
+            nextButton.onclick = submitAnswer;
+            document.body.appendChild(nextButton);
+        }
+
+        // Toggle button selection
+        function toggleSelection(colorBox, color) {
+            if (selectedButtons.includes(colorBox)) {
+                selectedButtons = selectedButtons.filter(btn => btn !== colorBox);
+                colorBox.style.border = "1px solid #000"; // Reset border
+            } else {
+                selectedButtons.push(colorBox);
+                colorBox.style.border = "3px solid red"; // Highlight selected
+            }
+        }
+
+        // Submit the answer
+        async function submitAnswer() {
+            const endTime = performance.now();
+            const timeSpent = (endTime - startTime) / 1000; // Convert to seconds
+
+            const selectedColors = selectedButtons.map(btn => btn.style.backgroundColor);
+            const answer = `Selected Colors: ${selectedColors.join(', ')}`;
+            level++;
+
+            const response = await fetch('/submit_answer', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    user_info: userInfo,
+                    level: level - 1, // Level before incrementing
+                    time_spent: timeSpent,
+                    answer,
+                    color_matrix: colorMatrix
+                }),
+            });
+
+            const data = await response.json();
+            alert(data.message);
+            if (level <= 10) {
+                startLevel(); // Proceed to next level
+            } else {
+                endGame();
+            }
+        }
+
+        // End the game
+        function endGame() {
+            document.getElementById('color-grid').innerHTML = ''; // Clear the grid
+            alert("Congratulations! You've completed all levels!");
+        }
+    </script>
+</head>
+<body>
+    <h1>Welcome to the Color Game</h1>
+    <button onclick="startGame()">Start Game</button>
+
+    <div id="user-info">
+        <h2>User Information</h2>
+        <label>Name:</label>
+        <input type="text" id="name" required><br>
+        <label>Surname:</label>
+        <input type="text" id="surname" required><br>
+        <label>Age:</label>
+        <input type="number" id="age" required><br>
+        <label>Gender:</label>
+        <input type="radio" name="gender" value="Male" checked> Male
+        <input type="radio" name="gender" value="Female"> Female<br>
+        <button onclick="saveUserInfo()">Save</button>
+    </div>
+
+    <div id="color-grid"></div> <!-- Container for displaying color matrix -->
+</body>
+</html>
