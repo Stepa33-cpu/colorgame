@@ -81,10 +81,30 @@
                 });
             });
 
+            // Clear previous button section
+            const buttonContainer = document.getElementById('button-container');
+            buttonContainer.innerHTML = ''; // Clear previous buttons
+
+            // Add a button for "All Colors are the Same"
+            const sameColorButton = document.createElement('button');
+            sameColorButton.innerText = "All Colors are the Same";
+            sameColorButton.onclick = () => submitAnswer("allSame");
+            buttonContainer.appendChild(sameColorButton);
+
+            // Add an input for the number of color groups
+            const colorGroupsInput = document.createElement('input');
+            colorGroupsInput.type = 'number';
+            colorGroupsInput.id = 'colorGroups';
+            colorGroupsInput.placeholder = 'I see ___ color groups';
+            colorGroupsInput.min = 1;
+            colorGroupsInput.max = 10; // Set max limit to 10
+            buttonContainer.appendChild(colorGroupsInput);
+
+            // Next button
             const nextButton = document.createElement('button');
             nextButton.innerText = "Next";
-            nextButton.onclick = submitAnswer;
-            document.body.appendChild(nextButton);
+            nextButton.onclick = () => submitAnswer("next");
+            buttonContainer.appendChild(nextButton);
         }
 
         // Toggle button selection
@@ -99,12 +119,14 @@
         }
 
         // Submit the answer
-        async function submitAnswer() {
+        async function submitAnswer(action) {
             const endTime = performance.now();
             const timeSpent = (endTime - startTime) / 1000; // Convert to seconds
 
+            // Collect selected colors
             const selectedColors = selectedButtons.map(btn => btn.style.backgroundColor);
-            const answer = `Selected Colors: ${selectedColors.join(', ')}`;
+            const answer = action === "allSame" ? "All Colors are the Same" : `Selected Colors: ${selectedColors.join(', ')}`;
+            const colorGroups = document.getElementById('colorGroups').value; // Get color groups input
             level++;
 
             const response = await fetch('/submit_answer', {
@@ -117,7 +139,8 @@
                     level: level - 1, // Level before incrementing
                     time_spent: timeSpent,
                     answer,
-                    color_matrix: colorMatrix
+                    color_matrix: colorMatrix,
+                    color_groups: colorGroups // Include color groups in the request
                 }),
             });
 
@@ -149,12 +172,13 @@
         <input type="text" id="surname" required><br>
         <label>Age:</label>
         <input type="number" id="age" required><br>
-        <label>Gender:</label>
-        <input type="radio" name="gender" value="Male" checked> Male
-        <input type="radio" name="gender" value="Female"> Female<br>
-        <button onclick="saveUserInfo()">Save</button>
+        <label>Gender:</label><br>
+        <input type="radio" name="gender" value="Male" required> Male<br>
+        <input type="radio" name="gender" value="Female" required> Female<br>
+        <button onclick="saveUserInfo()">Save Info</button>
     </div>
 
-    <div id="color-grid"></div> <!-- Container for displaying color matrix -->
+    <div id="color-grid"></div>
+    <div id="button-container"></div> <!-- Button container for buttons -->
 </body>
 </html>
