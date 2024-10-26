@@ -129,56 +129,55 @@
             const colorGroups = document.getElementById('colorGroups').value; // Get color groups input
             level++;
 
-            const response = await fetch('/submit_answer', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    user_info: userInfo,
-                    level: level - 1, // Level before incrementing
-                    time_spent: timeSpent,
-                    answer,
-                    color_matrix: colorMatrix,
-                    color_groups: colorGroups // Include color groups in the request
-                }),
-            });
+            try {
+                const response = await fetch('/submit_answer', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        user_info: userInfo,
+                        level: level - 1, // Level before incrementing
+                        time_spent: timeSpent,
+                        answer,
+                        color_matrix: colorMatrix,
+                        color_groups: colorGroups // Include color groups in the request
+                    }),
+                });
 
-            const data = await response.json();
-            alert(data.message);
-            if (level <= 10) {
-                startLevel(); // Proceed to next level
-            } else {
-                endGame();
+                // Check if response is ok
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                alert(data.message);
+                if (level <= 10) {
+                    startLevel(); // Proceed to next level
+                } else {
+                    alert('Game over! Thank you for playing.');
+                }
+            } catch (error) {
+                console.error('Error submitting answer:', error);
+                alert('An error occurred: ' + error.message);
             }
-        }
-
-        // End the game
-        function endGame() {
-            document.getElementById('color-grid').innerHTML = ''; // Clear the grid
-            alert("Congratulations! You've completed all levels!");
         }
     </script>
 </head>
-<body>
-    <h1>Welcome to the Color Game</h1>
-    <button onclick="startGame()">Start Game</button>
-
+<body onload="startGame()">
+    <h1>Color Game</h1>
     <div id="user-info">
-        <h2>User Information</h2>
-        <label>Name:</label>
-        <input type="text" id="name" required><br>
-        <label>Surname:</label>
-        <input type="text" id="surname" required><br>
-        <label>Age:</label>
-        <input type="number" id="age" required><br>
-        <label>Gender:</label><br>
-        <input type="radio" name="gender" value="Male" required> Male<br>
-        <input type="radio" name="gender" value="Female" required> Female<br>
-        <button onclick="saveUserInfo()">Save Info</button>
+        <input type="text" id="name" placeholder="Name" required>
+        <input type="text" id="surname" placeholder="Surname" required>
+        <input type="number" id="age" placeholder="Age" required>
+        <div>
+            <label><input type="radio" name="gender" value="Male" required> Male</label>
+            <label><input type="radio" name="gender" value="Female" required> Female</label>
+            <label><input type="radio" name="gender" value="Other" required> Other</label>
+        </div>
+        <button onclick="saveUserInfo()">Start Game</button>
     </div>
-
     <div id="color-grid"></div>
-    <div id="button-container"></div> <!-- Button container for buttons -->
+    <div id="button-container"></div>
 </body>
 </html>
