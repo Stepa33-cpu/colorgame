@@ -89,7 +89,8 @@ def submit_answer():
     return jsonify({"message": "Answer submitted successfully"})
 
 
-if __name__ == '__main__':
-    with app.app_context():
-        db.create_all()
-    app.run(debug=True)
+if __name__ == "__main__":
+    # Run the app on the host 0.0.0.0 and the port from the environment variable PORT
+    port = int(os.environ.get("PORT", 5000))  # Default to 5000 if PORT is not set
+    app.run(host="0.0.0.0", port=port)
+
