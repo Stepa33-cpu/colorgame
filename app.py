@@ -7,21 +7,17 @@ import os
 app = Flask(__name__)
 
 # Database configuration
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///color_game_data.db'
+# Use external URL for production and internal for local development
+if os.environ.get('FLASK_ENV') == 'production':
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://bazadate_user:oLJzh7gdA2B6K0gB3iaHPUulQiwbDXaF@dpg-csea36m8ii6s738vfh1g-a.frankfurt-postgres.render.com/bazadate'
+else:
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://bazadate_user:oLJzh7gdA2B6K0gB3iaHPUulQiwbDXaF@dpg-csea36m8ii6s738vfh1g-a/bazadate'
+
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
-# UserData model to store all required fields
-class UserData(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(50))
-    surname = db.Column(db.String(50))
-    age = db.Column(db.Integer)
-    gender = db.Column(db.String(10))
-    level = db.Column(db.Integer)
-    time_spent = db.Column(db.Float)
-    answer = db.Column(db.Text)  # Stores button action or selected color RGB codes
-    color_matrix = db.Column(db.Text)  # Stores RGB codes of the color grid as a JSON string
+# Import UserData model
+from models import UserData
 
 # Function to generate similar colors based on a base RGB color
 def generate_similar_pixels(base_pixel, num_pixels=9, variation=1):
@@ -78,12 +74,10 @@ def submit_answer():
 
     return jsonify({"message": "Answer submitted successfully"})
 
-
 if __name__ == '__main__':
     with app.app_context():
-        db.create_all()
+        db.create_all()  # Create database tables if they don't exist
 
     # Get the port from the environment variable or default to 5000
-    port = int(os.environ.get('PORT', 5000))  # Use PORT environment variable or default to 5000
+    port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port, debug=True)
-

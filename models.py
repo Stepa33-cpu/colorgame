@@ -2,7 +2,6 @@ from flask_sqlalchemy import SQLAlchemy
 
 db = SQLAlchemy()
 
-
 class UserData(db.Model):
     __tablename__ = 'user_data'
 
