@@ -1,20 +1,28 @@
 from flask import Flask, request, jsonify, render_template
 from flask_sqlalchemy import SQLAlchemy
+from flask_migrate import Migrate
 import random
 import json
 import os
+import logging
 
 app = Flask(__name__)
 
+# Configure logging
+logging.basicConfig()
+logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)
+
 # Database configuration
-# Use external URL for production and internal for local development
 if os.environ.get('FLASK_ENV') == 'production':
     app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://bazadate_user:oLJzh7gdA2B6K0gB3iaHPUulQiwbDXaF@dpg-csea36m8ii6s738vfh1g-a.frankfurt-postgres.render.com/bazadate'
 else:
     app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://bazadate_user:oLJzh7gdA2B6K0gB3iaHPUulQiwbDXaF@dpg-csea36m8ii6s738vfh1g-a/bazadate'
 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+# Initialize database and migration
 db = SQLAlchemy(app)
+migrate = Migrate(app, db)
 
 # Import UserData model
 from models import UserData
