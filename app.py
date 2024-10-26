@@ -1,16 +1,10 @@
 from flask import Flask, request, jsonify, render_template
 from flask_sqlalchemy import SQLAlchemy
-from flask_migrate import Migrate
 import random
 import json
 import os
-import logging
 
 app = Flask(__name__)
-
-# Configure logging
-logging.basicConfig()
-logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)
 
 # Database configuration
 if os.environ.get('FLASK_ENV') == 'production':
@@ -19,15 +13,11 @@ else:
     app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://bazadate_user:oLJzh7gdA2B6K0gB3iaHPUulQiwbDXaF@dpg-csea36m8ii6s738vfh1g-a/bazadate'
 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-
-# Initialize database and migration
 db = SQLAlchemy(app)
-migrate = Migrate(app, db)
 
 # Import UserData model
 from models import UserData
 
-# Function to generate similar colors based on a base RGB color
 def generate_similar_pixels(base_pixel, num_pixels=9, variation=1):
     return [
         "#%02x%02x%02x" % tuple(
@@ -37,12 +27,10 @@ def generate_similar_pixels(base_pixel, num_pixels=9, variation=1):
         for _ in range(num_pixels)
     ]
 
-# Homepage route
 @app.route('/')
 def home():
     return render_template('index.html')
 
-# Route for starting the game level
 @app.route('/start_level', methods=['POST'])
 def start_level():
     data = request.get_json()
@@ -55,15 +43,17 @@ def start_level():
         "color_matrix": color_matrix
     })
 
-# Route to submit user answers and save to the database
 @app.route('/submit_answer', methods=['POST'])
 def submit_answer():
     data = request.get_json()
+    if not data:
+        return jsonify({"error": "Invalid JSON"}), 400
+
     user_info = data['user_info']
     level = data['level']
     time_spent = data['time_spent']
     answer = data.get('answer', "")
-    color_matrix = json.dumps(data['color_matrix'])  # Store matrix as JSON string
+    color_matrix = json.dumps(data['color_matrix'])
 
     # Save data into the database
     new_entry = UserData(
@@ -84,8 +74,7 @@ def submit_answer():
 
 if __name__ == '__main__':
     with app.app_context():
-        db.create_all()  # Create database tables if they don't exist
+        db.create_all()
 
-    # Get the port from the environment variable or default to 5000
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port, debug=True)
